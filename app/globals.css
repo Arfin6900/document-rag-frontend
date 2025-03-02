@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 10, 10, 20;
+  --background-end-rgb: 20, 20, 40;
+  
+  /* Theme Colors */
+  --primary: 270 100% 57%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 180 100% 50%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 315 100% 53%;
+  --accent-foreground: 0 0% 100%;
+  
+  /* UI Colors */
+  --background: 240 30% 5%;
+  --foreground: 0 0% 98%;
+  --card: 240 20% 8%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 25% 10%;
+  --popover-foreground: 0 0% 98%;
+  --muted: 240 15% 15%;
+  --muted-foreground: 240 5% 65%;
+  --border: 240 20% 20%;
+  --input: 240 20% 12%;
+  --ring: 270 100% 57%;
+  
+  /* Chart Colors */
+  --chart-1: 270 100% 57%;
+  --chart-2: 180 100% 50%;
+  --chart-3: 315 100% 53%;
+  --chart-4: 200 100% 60%;
+  --chart-5: 120 100% 60%;
+  
+  --radius: 0.5rem;
+}
+
+@layer base {
+  *{
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    background: linear-gradient(to bottom, rgb(var(--background-start-rgb)), rgb(var(--background-end-rgb)));
+    background-attachment: fixed;
+    font-family: 'Inter', sans-serif;
+    position: relative;
+    min-height: 100vh;
+  }
+  
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      linear-gradient(rgba(176, 38, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(176, 38, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: -1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(30, 30, 50, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Neon Effects */
+.neon-glow-purple {
+  box-shadow: 0 0 5px #B026FF, 0 0 10px #B026FF, 0 0 15px #B026FF;
+}
+
+.neon-glow-blue {
+  box-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF, 0 0 15px #00FFFF;
+}
+
+.neon-glow-pink {
+  box-shadow: 0 0 5px #FF10F0, 0 0 10px #FF10F0, 0 0 15px #FF10F0;
+}
+
+.neon-text-purple {
+  text-shadow: 0 0 5px #B026FF, 0 0 10px #B026FF;
+}
+
+.neon-text-blue {
+  text-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF;
+}
+
+.neon-text-pink {
+  text-shadow: 0 0 5px #FF10F0, 0 0 10px #FF10F0;
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.8);
+}
+
+/* Custom Utilities */
+@layer utilities {
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-image: linear-gradient(90deg, #B026FF, #00FFFF);
+  }
+  
+  .border-gradient {
+    border-image: linear-gradient(45deg, #B026FF, #00FFFF) 1;
+  }
+}
