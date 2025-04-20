@@ -1,27 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  ChevronLeft, 
-  FileText, 
-  Calendar, 
-  Layers, 
-  Edit, 
-  Trash2,
-  Download,
-  Link,
-  ExternalLink
-} from "lucide-react";
-import { MainLayout } from "@/components/layout/main-layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
-import { ChunkVisualizer } from "@/components/document/chunk-visualizer";
-import { 
+import { EmbeddingsVisualizer } from '@/components/document/EmbeddingsVisualizer';
+import { MainLayout } from '@/components/layout/main-layout';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -31,58 +12,115 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import toast from "react-hot-toast";
-
-// Mock document data
-const documentData = {
-  id: "1",
-  fileName: "Annual Report 2024.pdf",
-  summary: "Financial report covering Q1-Q4 of fiscal year 2024 with detailed analysis of revenue streams and market performance. The document includes executive summaries, financial statements, market analysis, and future projections. Key highlights include a 15% revenue growth, expansion into new markets, and strategic partnerships.",
-  chunks: 24,
-  uploadDate: new Date("2024-03-15"),
-  fileType: "pdf",
-  fileSize: "2.4 MB",
-  lastQueried: new Date("2024-03-20"),
-  metadata: {
-    author: "Finance Department",
-    createdDate: new Date("2024-02-28"),
-    pages: 42,
-    keywords: ["finance", "annual report", "revenue", "projections", "Q4"],
-  },
-  relatedDocuments: [
-    {
-      id: "2",
-      fileName: "Q4 Financial Summary.pdf",
-      relevance: 0.92,
-    },
-    {
-      id: "5",
-      fileName: "Market Analysis.pdf",
-      relevance: 0.78,
-    },
-  ],
-  chunkContent: [
-    { id: "c1", content: "Executive Summary: The fiscal year 2024 has been a period of significant growth and transformation for our company. We achieved a 15% increase in revenue compared to the previous year, with particularly strong performance in our technology and services divisions.", relevance: 0.95 },
-    { id: "c2", content: "Financial Highlights: Total revenue reached $245 million, representing a 15% year-over-year growth. Operating margin improved to 28%, up from 24% in the previous year. Cash flow from operations increased by 22% to $67 million.", relevance: 0.88 },
-    { id: "c3", content: "Market Expansion: We successfully entered three new international markets in Asia-Pacific, establishing a strong presence in Singapore, Malaysia, and Vietnam. These new markets contributed 8% to our overall revenue in Q4.", relevance: 0.75 },
-    { id: "c4", content: "Strategic Partnerships: We formed key strategic alliances with industry leaders in cloud computing and artificial intelligence, allowing us to enhance our product offerings and deliver more value to our customers.", relevance: 0.82 },
-    { id: "c5", content: "Future Outlook: For fiscal year 2025, we project continued growth at 12-18%, driven by expansion in existing markets and further penetration into the Asia-Pacific region. We anticipate increased investment in R&D, particularly in AI and machine learning technologies.", relevance: 0.91 },
-  ],
-};
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import apis from 'apis';
+import { format } from 'date-fns';
+import { motion } from 'framer-motion';
+import { ChevronLeft, Download, File, FileText, Trash2 } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 export default function DocumentViewPage() {
   const router = useRouter();
   const params = useParams();
   const { id } = params;
 
-  const [activeTab, setActiveTab] = useState("overview");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // Fetch document data
+  const {
+    data: documentData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['document', id],
+    queryFn: () => apis.getDocument(id as string),
+  });
+  const document = documentData?.data;
+
+  // Delete document mutation
+  const deleteMutation = useMutation({
+    mutationFn: (documentId: string) => apis.deleteDocument(documentId),
+    onSuccess: () => {
+      toast.success('Document deleted successfully');
+      router.push('/docs');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete document');
+      console.error('Error deleting document:', error);
+    },
+  });
 
   const handleDelete = () => {
-    toast.success("Document deleted successfully");
-    router.push("/docs");
+    deleteMutation.mutate(id as string);
   };
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-8" />
+            <Skeleton className="h-8 w-48" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Skeleton className="h-16" />
+                    <Skeleton className="h-16" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-24" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error || !document) {
+    return (
+      <MainLayout>
+        <div className="flex flex-col items-center justify-center py-12">
+          <h2 className="text-xl font-semibold mb-2">
+            Failed to load document
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            {error instanceof Error ? error.message : 'Something went wrong'}
+          </p>
+          <Button onClick={() => router.push('/docs')}>Go Back</Button>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -93,15 +131,17 @@ export default function DocumentViewPage() {
         className="space-y-6"
       >
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-8 w-8"
-            onClick={() => router.push("/docs")}
+            onClick={() => router.push('/docs')}
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-heading font-bold neon-text-purple">Document Details</h1>
+          <h1 className="text-2xl font-heading font-bold neon-text-purple">
+            Document Details
+          </h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -110,10 +150,14 @@ export default function DocumentViewPage() {
               <CardHeader className="flex flex-row items-start justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    {/* {documentData.fileType === "pdf" ? <FilePdf className="h-5 w-5 text-red-500" /> : <FileText className="h-5 w-5 text-blue-500" />} */}
-                    <CardTitle>{documentData.fileName}</CardTitle>
+                    {document.fileType === 'pdf' ? (
+                      <File className="h-5 w-5 text-red-500" />
+                    ) : (
+                      <FileText className="h-5 w-5 text-blue-500" />
+                    )}
+                    <CardTitle>{document.fileName}</CardTitle>
                   </div>
-                  <CardDescription>{documentData.summary}</CardDescription>
+                  <CardDescription>{document.summary}</CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="icon">
@@ -129,12 +173,18 @@ export default function DocumentViewPage() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Document</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to delete this document? This action cannot be undone.
+                          Are you sure you want to delete this document? This
+                          action cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          disabled={deleteMutation.isPending}
+                        >
+                          {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
@@ -144,31 +194,114 @@ export default function DocumentViewPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm font-semibold">Uploaded On</p>
-                    <p className="text-sm">{format(documentData.uploadDate, 'PPP')}</p>
+                    <p className="text-sm">
+                      {format(new Date(document.created_at), 'PPP')}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm font-semibold">File Size</p>
-                    <p className="text-sm">{documentData.fileSize}</p>
+                    <p className="text-sm">{document.fileSize || 'Unknown'}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Document Content Preview */}
+            {document.content && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content Preview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <pre className="whitespace-pre-wrap font-mono text-sm bg-muted p-4 rounded-lg">
+                    {document.content}
+                  </pre>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Embeddings Visualization */}
+            {document.chunks && document.chunks.length > 0 && (
+              <EmbeddingsVisualizer chunks={document.chunks} />
+            )}
           </div>
-          <div className="space-y-6">
+          {/* <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Metadata</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="text-sm space-y-2">
-                  <li><strong>Author:</strong> {documentData.metadata.author}</li>
-                  <li><strong>Created Date:</strong> {format(documentData.metadata.createdDate, 'PPP')}</li>
-                  <li><strong>Pages:</strong> {documentData.metadata.pages}</li>
-                  <li><strong>Keywords:</strong> {documentData.metadata.keywords.join(", ")}</li>
+                  <li>
+                    <strong>Author:</strong> {document.metadata.author}
+                  </li>
+                  <li>
+                    <strong>Created Date:</strong>{' '}
+                    {format(new Date(document.metadata.createdDate), 'PPP')}
+                  </li>
+                  <li>
+                    <strong>Pages:</strong> {document.metadata.pages}
+                  </li>
+                  {document.metadata.keywords.length > 0 && (
+                    <li>
+                      <strong>Keywords:</strong>{' '}
+                      {document.metadata.keywords.join(', ')}
+                    </li>
+                  )}
                 </ul>
               </CardContent>
             </Card>
-          </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Statistics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="text-sm space-y-2">
+                  <li>
+                    <strong>Total Chunks:</strong> {document.chunks.length}
+                  </li>
+                  <li>
+                    <strong>File Type:</strong>{' '}
+                    <span className="uppercase">{document.fileType}</span>
+                  </li>
+                  {document.lastQueried && (
+                    <li>
+                      <strong>Last Queried:</strong>{' '}
+                      {format(new Date(document.lastQueried), 'PPP')}
+                    </li>
+                  )}
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Embedding Statistics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="text-sm space-y-2">
+                  <li>
+                    <strong>Total Chunks:</strong> {document.totalChunks}
+                  </li>
+                  <li>
+                    <strong>Embedding Dimensions:</strong>{' '}
+                    {document.chunks?.[0]?.embedding.length || 0}
+                  </li>
+                  <li>
+                    <strong>Average Chunk Length:</strong>{' '}
+                    {Math.round(
+                      document.chunks?.reduce(
+                        (acc, chunk) => acc + chunk?.content?.length,
+                        0
+                      ) / document.chunks?.length || 0
+                    )}{' '}
+                    characters
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div> */}
         </div>
       </motion.div>
     </MainLayout>
