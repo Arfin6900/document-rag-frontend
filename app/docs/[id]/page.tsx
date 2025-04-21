@@ -45,6 +45,7 @@ export default function DocumentViewPage() {
     queryFn: () => apis.getDocument(id as string),
   });
   const document = documentData?.data;
+  console.log("🚀 ~ DocumentViewPage ~ document:", document)
 
   // Delete document mutation
   const deleteMutation = useMutation({
@@ -60,7 +61,7 @@ export default function DocumentViewPage() {
   });
 
   const handleDelete = () => {
-    deleteMutation.mutate(id as string);
+    deleteMutation.mutate(document?.document_name as string);
   };
 
   if (isLoading) {
@@ -150,12 +151,12 @@ export default function DocumentViewPage() {
               <CardHeader className="flex flex-row items-start justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    {document.fileType === 'pdf' ? (
+                    {document.source === 'file' ? (
                       <File className="h-5 w-5 text-red-500" />
                     ) : (
                       <FileText className="h-5 w-5 text-blue-500" />
                     )}
-                    <CardTitle>{document.fileName}</CardTitle>
+                    <CardTitle>{document.document_name}</CardTitle>
                   </div>
                   <CardDescription>{document.summary}</CardDescription>
                 </div>

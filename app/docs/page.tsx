@@ -53,64 +53,6 @@ interface GetDocumentsParams {
   sort?: string;
   order?: string;
 }
-// Mock data
-const documents = [
-  {
-    id: '1',
-    fileName: 'Annual Report 2024.pdf',
-    summary:
-      'Financial report covering Q1-Q4 of fiscal year 2024 with detailed analysis of revenue streams and market performance.',
-    chunks: 24,
-    uploadDate: new Date('2024-03-15'),
-    fileType: 'pdf',
-  },
-  {
-    id: '2',
-    fileName: 'Project Proposal.txt',
-    summary:
-      'Detailed proposal for the new AI integration project including timeline, resource requirements, and expected outcomes.',
-    chunks: 12,
-    uploadDate: new Date('2024-03-10'),
-    fileType: 'txt',
-  },
-  {
-    id: '3',
-    fileName: 'Meeting Minutes.txt',
-    summary:
-      'Minutes from the quarterly board meeting discussing strategic initiatives and budget allocations for upcoming projects.',
-    chunks: 8,
-    uploadDate: new Date('2024-03-05'),
-    fileType: 'txt',
-  },
-  {
-    id: '4',
-    fileName: 'Technical Documentation.pdf',
-    summary:
-      'Comprehensive documentation of the system architecture, API endpoints, and integration points for the new platform.',
-    chunks: 32,
-    uploadDate: new Date('2024-02-28'),
-    fileType: 'pdf',
-  },
-  {
-    id: '5',
-    fileName: 'Market Analysis.pdf',
-    summary:
-      'In-depth analysis of current market trends, competitor landscape, and growth opportunities in the AI sector.',
-    chunks: 18,
-    uploadDate: new Date('2024-02-20'),
-    fileType: 'pdf',
-  },
-  {
-    id: '6',
-    fileName: 'Product Roadmap.txt',
-    summary:
-      'Detailed roadmap outlining feature development, release schedules, and strategic milestones for the next 12 months.',
-    chunks: 15,
-    uploadDate: new Date('2024-02-15'),
-    fileType: 'txt',
-  },
-];
-
 type ViewMode = 'grid' | 'list';
 type SortOption = 'name' | 'date' | 'chunks';
 type SortDirection = 'asc' | 'desc';
@@ -393,7 +335,14 @@ export default function DocumentsPage() {
 }
 
 interface DocumentCardProps {
-  document: (typeof documents)[0];
+  document: {
+    id: string;
+    fileName: string;
+    summary: string;
+    chunks: number;
+    uploadDate: Date;
+    fileType: string;
+};
   index: number;
   onView: () => void;
   onDelete: () => void;
@@ -453,7 +402,7 @@ function DocumentCard({
           <Eye className="h-4 w-4 mr-2" />
           View
         </Button>
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           className="w-full glass border-destructive/20 hover:border-destructive/50 text-destructive"
@@ -461,14 +410,21 @@ function DocumentCard({
         >
           <Trash2 className="h-4 w-4 mr-2" />
           Delete
-        </Button>
+        </Button> */}
       </CardFooter>
     </motion.div>
   );
 }
 
 interface DocumentListItemProps {
-  document: (typeof documents)[0];
+  document: {
+    id: string;
+    fileName: string;
+    summary: string;
+    chunks: number;
+    uploadDate: Date;
+    fileType: string;
+  };
   index: number;
   onView: () => void;
   onDelete: () => void;
@@ -526,14 +482,14 @@ function DocumentListItem({
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button
+          {/* <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-destructive hover:text-destructive"
             onClick={onDelete}
           >
             <Trash2 className="h-4 w-4" />
-          </Button>
+          </Button> */}
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <Download className="h-4 w-4" />
           </Button>

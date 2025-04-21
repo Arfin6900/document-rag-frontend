@@ -35,6 +35,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import toast from "react-hot-toast";
+import { useMutation } from "@tanstack/react-query";
+import apis from "apis";
 
 type Message = {
   id: string;
@@ -58,7 +60,34 @@ export default function QueryPage() {
   const [model, setModel] = useState<ModelType>("gpt-4");
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  const { mutate: generateLLmResponse, isPending: isLoading2 } = useMutation<
+  { data: any[] },
+  Error,
+  { query: string,top_k:number }  
+>({
+  mutationFn: (params) => apis.queryDocument(params),
+  onSuccess: (data:any) => {
+         // Mock response
+         const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.data?.results,
+          timestamp: new Date(),
+          sources:data.data?.sources?.map((val:any) => ({
+            id: val.vector_id,
+            fileName: val.docName,
+            content: val.content,
+            relevance: val.relevancy?.score,
+          })) || [],
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsLoading(false);
+  },
+  onError: (error) => {
+    toast.error('Failed to fetch documents');
+    console.error('Error fetching documents:', error);
+  },
+});
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -80,34 +109,7 @@ export default function QueryPage() {
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
     setIsLoading(true);
-    
-    // Simulate API call delay
-    setTimeout(() => {
-      // Mock response
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: generateMockResponse(inputValue),
-        timestamp: new Date(),
-        sources: [
-          {
-            id: "1",
-            fileName: "Annual Report 2024.pdf",
-            content: "Financial report covering Q1-Q4 of fiscal year 2024 with detailed analysis of revenue streams and market performance.",
-            relevance: 0.92,
-          },
-          {
-            id: "2",
-            fileName: "Project Proposal.txt",
-            content: "Detailed proposal for the new AI integration project including timeline, resource requirements, and expected outcomes.",
-            relevance: 0.78,
-          },
-        ],
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-      setIsLoading(false);
-    }, 2000);
+    generateLLmResponse({ query: inputValue,top_k:3 }); 
   };
 
   const generateMockResponse = (query: string): string => {
@@ -318,7 +320,7 @@ function MessageItem({ message }: MessageItemProps) {
                           <span className="font-medium text-sm">{source.fileName}</span>
                         </div>
                         <Badge variant="outline" className="text-xs">
-                          {Math.round(source.relevance * 100)}% match
+                          {Math.round(source.relevance)}% match
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{source.content}</p>

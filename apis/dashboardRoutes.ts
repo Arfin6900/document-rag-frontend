@@ -26,12 +26,13 @@ const createDashboardRoutes = (api) => {
   };
 
   const deleteDocument = async (id) => {
-    return api.delete(`/doc/delete-asset/${id}`);
+    return api.delete(`/doc/document/${id}`);
   };
 
-  const queryDocument = async (query, documentId, limit) => {
-    return api.post('/doc/query-docs', { query, documentId, limit });
+  const queryDocument = async (query) => {
+    return api.post('/doc/embeddings/query/', query);
   };
+  
 
   return {
     uploadMedia,
