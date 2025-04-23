@@ -7,6 +7,8 @@ import { Plus, Menu } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
+import apis from "apis";
 
 interface Chat {
   id: string;
@@ -28,28 +30,36 @@ export default function QueryLayout({
   const searchParams = useSearchParams();
   const chatId = searchParams.get("id");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [chats, setChats] = useState<Chat[]>([]);
 
-  const [chats, setChats] = useState<Chat[]>([
-    {
-      id: "1",
-      name: "Arfins resume",
-      created_at: "2025-04-22T11:39:17.074000",
-      user_id: "1",
-      contexts: ["ArfinResumee"],
-      provider: "gemini",
-      is_active: true,
-    },
-    {
-      id: "2",
-      name: "Arfins resume",
-      created_at: "2025-04-22T11:39:17.074000",
-      user_id: "1",
-      contexts: ["ArfinResumee"],
-      provider: "gemini",
-      is_active: true,
-    },
-  ]);
-
+    const { mutate: deleteChat, isPending: isDeleting } = useMutation({
+      mutationFn: (chatId: string) => {
+        return apis.deleteChat(chatId);
+      },
+    });
+    
+    const { mutate: createChat, isPending: isCreating } = useMutation({
+      mutationFn: (chat: Chat) => {
+        return apis.createChat(chat);
+      },
+      onSuccess: ({data}) => {
+        console.log("🚀 ~ data:", data)
+      },
+      onError: (error) => {
+        console.error("Error creating chat:", error);
+      },
+    });
+    const {mutate: getChats} = useMutation({
+      mutationFn: () => {
+        return apis.getChats();
+      },
+      onSuccess: (data) => {
+        setChats(data.data);
+      },
+      onError: (error) => {
+        console.error("Error getting chats:", error);
+      },
+    });
   const handleChatSelect = (chatId: string) => {
     router.push(`/docs/query?id=${chatId}`);
     setIsDrawerOpen(false); // Close drawer on mobile after selection
@@ -66,6 +76,10 @@ export default function QueryLayout({
   useEffect(() => {
     setIsDrawerOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    getChats();
+  }, []);
 
   return (
     <MainLayout>

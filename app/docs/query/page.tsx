@@ -43,6 +43,7 @@ type Message = {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  chat_room_id?: string;
   sources?: {
     id: string;
     fileName: string;
@@ -56,20 +57,31 @@ type ModelType = "gpt-4" | "gemini-pro";
 export default function QueryPage() {
   const searchParams = useSearchParams();
   const chatId = searchParams.get("id");
-  
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [model, setModel] = useState<ModelType>("gpt-4");
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+ 
+  const { mutate: getChatMessages, isPending: isLoadingChats } = useMutation<
+  { data: any[] },
+  Error,
+  string  
+>({
+  mutationFn: (params) => apis.getChatMessages(params),
+  onSuccess: (data:any) => {
+    setMessages(data.data);
+  },
+  onError: (error) => {
+    toast.error('Failed to fetch chat messages');
+    console.error('Error fetching chat messages:', error);
+  },
+});
   // Fetch chat messages when chatId changes
   useEffect(() => {
     if (chatId) {
-      // TODO: Fetch chat messages from API
-      // For now, we'll just clear the messages
-      setMessages([]);
+      getChatMessages(chatId);
     }
   }, [chatId]);
 

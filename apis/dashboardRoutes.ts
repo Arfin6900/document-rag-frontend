@@ -44,8 +44,8 @@ const createDashboardRoutes = (api) => {
     is_active: boolean;
   }
 
-  const getChats = async () : Promise<Chats[]> => {
-    return api.get('/chat/room/');
+  const getChats = async () : Promise<{data:Chats[]}> => {
+    return api.get('/chat/rooms/');
   };
 
 
@@ -60,7 +60,7 @@ const createDashboardRoutes = (api) => {
       score: number;
     }[];
   }
-  const getChatMessages = async (id) : Promise<ChatMessage[]> => {
+  const getChatMessages = async (id) : Promise<{data:ChatMessage[]}> => {
     return api.get(`/chat/room/${id}/messages/`);
   };
 
@@ -90,6 +90,7 @@ const createDashboardRoutes = (api) => {
     getChats,
     getChatMessages,
     createChat,
+    deleteChat,
   };
 };
 
