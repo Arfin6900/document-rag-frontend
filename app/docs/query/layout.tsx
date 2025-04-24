@@ -9,9 +9,19 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import apis from "apis";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Chat {
-  id: string;
+  id?: string;
   name: string;
   created_at: string;
   user_id: string;
@@ -30,46 +40,64 @@ export default function QueryLayout({
   const searchParams = useSearchParams();
   const chatId = searchParams.get("id");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
+  const [newChatName, setNewChatName] = useState("");
+
   const [chats, setChats] = useState<Chat[]>([]);
 
-    const { mutate: deleteChat, isPending: isDeleting } = useMutation({
-      mutationFn: (chatId: string) => {
-        return apis.deleteChat(chatId);
-      },
-    });
-    
-    const { mutate: createChat, isPending: isCreating } = useMutation({
-      mutationFn: (chat: Chat) => {
-        return apis.createChat(chat);
-      },
-      onSuccess: ({data}) => {
-        console.log("🚀 ~ data:", data)
-      },
-      onError: (error) => {
-        console.error("Error creating chat:", error);
-      },
-    });
-    const {mutate: getChats} = useMutation({
-      mutationFn: () => {
-        return apis.getChats();
-      },
-      onSuccess: (data) => {
-        setChats(data.data);
-      },
-      onError: (error) => {
-        console.error("Error getting chats:", error);
-      },
-    });
+  const { mutate: deleteChat, isPending: isDeleting } = useMutation({
+    mutationFn: (chatId: string) => {
+      return apis.deleteChat(chatId);
+    },
+  });
+  
+  const { mutate: createChat, isPending: isCreating } = useMutation({
+    mutationFn: (chat: Chat) => {
+      return apis.createChat(chat);
+    },
+    onSuccess: ({data}) => {
+      setIsNewChatDialogOpen(false);
+      setNewChatName("");
+      getChats();
+      router.push(`/docs/query?id=${data?.chat_room_id}`);
+    },
+    onError: (error) => {
+      console.error("Error creating chat:", error);
+    },
+  });
+
+  const {mutate: getChats} = useMutation({
+    mutationFn: () => {
+      return apis.getChats();
+    },
+    onSuccess: (data) => {
+      setChats(data.data);
+    },
+    onError: (error) => {
+      console.error("Error getting chats:", error);
+    },
+  });
+
   const handleChatSelect = (chatId: string) => {
     router.push(`/docs/query?id=${chatId}`);
-    setIsDrawerOpen(false); // Close drawer on mobile after selection
+    setIsDrawerOpen(false);
   };
 
   const handleNewChat = () => {
-    // TODO: Implement new chat creation
-    const newChatId = "new-chat-id"; // Replace with actual new chat ID
-    router.push(`/docs/query?id=${newChatId}`);
-    setIsDrawerOpen(false); // Close drawer on mobile after creation
+    setIsNewChatDialogOpen(true);
+  };
+
+  const handleCreateChat = () => {
+    if (!newChatName.trim()) return;
+    
+    createChat({
+      name: newChatName.trim(),
+      created_at: new Date().toISOString(),
+      user_id: "1",
+      contexts: [],
+      provider: "gemini",
+      is_active: true,
+    });
   };
 
   // Close drawer when route changes
@@ -123,7 +151,7 @@ export default function QueryLayout({
                     ? "bg-primary/10 border-primary"
                     : "hover:bg-muted/50"
                 )}
-                onClick={() => handleChatSelect(chat.id)}
+                onClick={() => handleChatSelect(chat.id!)}
               >
                 <div className="flex flex-col">
                   <span className="font-medium">{chat.name}</span>
@@ -148,6 +176,37 @@ export default function QueryLayout({
         <div className="flex-1 overflow-hidden">
           {children}
         </div>
+
+        {/* New Chat Dialog */}
+        <Dialog open={isNewChatDialogOpen} onOpenChange={setIsNewChatDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Chat</DialogTitle>
+              <DialogDescription>
+                Enter a name for your new chat. The default AI provider will be Gemini.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Chat Name</Label>
+                <Input
+                  id="name"
+                  value={newChatName}
+                  onChange={(e) => setNewChatName(e.target.value)}
+                  placeholder="Enter chat name"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsNewChatDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateChat} disabled={!newChatName.trim() || isCreating}>
+                {isCreating ? "Creating..." : "Create"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );

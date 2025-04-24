@@ -88,7 +88,7 @@ export default function QueryPage() {
   const { mutate: generateLLmResponse, isPending: isLoading2 } = useMutation<
   { data: any[] },
   Error,
-  { query: string,top_k:number }  
+  { query: string,top_k:number,chat_room_id:string,document_name:string,user_id:string }  
 >({
   mutationFn: (params) => apis.queryDocument(params),
   onSuccess: (data:any) => {
@@ -96,9 +96,9 @@ export default function QueryPage() {
          const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: data.data?.results,
+          content: data.data?.data?.results || data.data?.results,
           timestamp: new Date(),
-          sources:data.data?.sources?.map((val:any) => ({
+          sources:data.data?.data?.sources?.map((val:any) => ({
             id: val.vector_id,
             fileName: val.docName,
             content: val.content,
@@ -134,7 +134,7 @@ export default function QueryPage() {
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
     setIsLoading(true);
-    generateLLmResponse({ query: inputValue, top_k: 3 }); 
+    generateLLmResponse({ query: inputValue, top_k: 3,chat_room_id:chatId || "",document_name:"ArfinResumee",user_id:"1" }); 
   };
 
 
