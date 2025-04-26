@@ -102,7 +102,7 @@ export default function QueryPage() {
             id: val.vector_id,
             fileName: val.docName,
             content: val.content,
-            relevance: val.relevancy?.score,
+            relevance: val.relevance
           })) || [],
         };
         setMessages(prev => [...prev, assistantMessage]);
