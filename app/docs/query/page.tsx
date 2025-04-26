@@ -15,7 +15,6 @@ import {
   Bot,
   User
 } from "lucide-react";
-import { MainLayout } from "@/components/layout/main-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,12 +36,14 @@ import {
 import toast from "react-hot-toast";
 import { useMutation } from "@tanstack/react-query";
 import apis from "apis";
+import { useSearchParams } from "next/navigation";
 
 type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  chat_room_id?: string;
   sources?: {
     id: string;
     fileName: string;
@@ -54,16 +55,40 @@ type Message = {
 type ModelType = "gpt-4" | "gemini-pro";
 
 export default function QueryPage() {
+  const searchParams = useSearchParams();
+  const chatId = searchParams.get("id");
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [model, setModel] = useState<ModelType>("gpt-4");
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+ 
+  const { mutate: getChatMessages, isPending: isLoadingChats } = useMutation<
+  { data: any[] },
+  Error,
+  string  
+>({
+  mutationFn: (params) => apis.getChatMessages(params),
+  onSuccess: (data:any) => {
+    setMessages(data.data);
+  },
+  onError: (error) => {
+    toast.error('Failed to fetch chat messages');
+    console.error('Error fetching chat messages:', error);
+  },
+});
+  // Fetch chat messages when chatId changes
+  useEffect(() => {
+    if (chatId) {
+      getChatMessages(chatId);
+    }
+  }, [chatId]);
+
   const { mutate: generateLLmResponse, isPending: isLoading2 } = useMutation<
   { data: any[] },
   Error,
-  { query: string,top_k:number }  
+  { query: string,top_k:number,chat_room_id:string,document_name:string,user_id:string }  
 >({
   mutationFn: (params) => apis.queryDocument(params),
   onSuccess: (data:any) => {
@@ -71,13 +96,13 @@ export default function QueryPage() {
          const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: data.data?.results,
+          content: data.data?.data?.results || data.data?.results,
           timestamp: new Date(),
-          sources:data.data?.sources?.map((val:any) => ({
+          sources:data.data?.data?.sources?.map((val:any) => ({
             id: val.vector_id,
             fileName: val.docName,
             content: val.content,
-            relevance: val.relevancy?.score,
+            relevance: val.relevance
           })) || [],
         };
         setMessages(prev => [...prev, assistantMessage]);
@@ -89,9 +114,9 @@ export default function QueryPage() {
   },
 });
   // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  // useEffect(() => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,20 +134,9 @@ export default function QueryPage() {
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
     setIsLoading(true);
-    generateLLmResponse({ query: inputValue,top_k:3 }); 
+    generateLLmResponse({ query: inputValue, top_k: 3,chat_room_id:chatId || "",document_name:"ArfinResumee",user_id:"1" }); 
   };
 
-  const generateMockResponse = (query: string): string => {
-    const responses = [
-      "Based on the documents, the annual revenue growth was 12.3% year-over-year, with the strongest performance in the Q3 period. The financial projections indicate continued growth in the upcoming fiscal year.",
-      "The project timeline spans 6 months with three major milestones. The resource allocation includes 4 full-time developers and a budget of $250,000. The expected ROI is calculated at 135% over 18 months.",
-      "According to the technical documentation, the API endpoints support both REST and GraphQL interfaces. Authentication is handled via OAuth 2.0 with JWT tokens. Rate limiting is implemented at 100 requests per minute.",
-      "The market analysis shows a 23% increase in demand for AI-powered solutions in the enterprise sector. Key competitors include TechCorp (32% market share) and InnovateAI (18% market share).",
-      "The meeting minutes indicate that the board approved the expansion plan with a unanimous vote. The budget allocation for Q1 2025 was increased by 15% compared to the previous year.",
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
 
   const handleCopyResponse = () => {
     const lastAssistantMessage = [...messages].reverse().find(m => m.role === "assistant");
@@ -140,12 +154,12 @@ export default function QueryPage() {
   };
 
   return (
-    <MainLayout>
+    <div className="h-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="space-y-6 h-[calc(100vh-10rem)]"
+        className="h-full p-6"
       >
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -175,7 +189,7 @@ export default function QueryPage() {
           </div>
         </div>
 
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-[calc(100%-6rem)]  lg:h-[calc(100%-3rem)]">
           <div className="flex-grow overflow-y-auto pr-2 space-y-6 mb-4">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center">
@@ -248,7 +262,7 @@ export default function QueryPage() {
           </div>
         </div>
       </motion.div>
-    </MainLayout>
+    </div>
   );
 }
 
